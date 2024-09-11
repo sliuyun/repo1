@@ -9,16 +9,14 @@ struct figure{
 
 /*
 查看信号量：ipcs -s         删除信号量：ipcrm sem 信号量id
-查看共享内存：ipcs -m       删除共享内存：ipcrm -m 共享内存id 
-
-
+查看共享内存：ipcs -m       删除共享内存：ipcrm -m 共享内存id  
 */
 
 
 int main(int argc,char* argv[])
 {
     if(argc != 3)
-    {
+    {   cout<<"请依次输入程序名、人物名、年龄\n";
         cout<<"Example:./demo sunquan 40\n";
         return -1;
     }
@@ -30,7 +28,7 @@ int main(int argc,char* argv[])
         return -1;
     }
 
-    // 第二部，把共享内存连接到档期啊进程的地址空间
+    // 第二部，把共享内存连接到当前进程的地址空间
     figure* ptr = (figure*)shmat(shmid,0,0);
     if(ptr == (void*)-1){
         cout<<"shmat falied.\n";
@@ -38,7 +36,7 @@ int main(int argc,char* argv[])
     }
 
 
-    // 初始化二元信号量
+    // 创建、初始化二元信号量
     csemp mutex;
     if(mutex.init(0x5005) == false){
         cout<<"mutex.init(0x5005) failed.\n";
@@ -72,8 +70,4 @@ int main(int argc,char* argv[])
         cout<<"shmclt falied.\n";
         return -1;
     }
-
-
-
-
 }

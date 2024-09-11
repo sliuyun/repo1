@@ -8,10 +8,11 @@
 #include<cstdlib>
 #include<cstring>
 #include<unistd.h>
-#include<sys/ipc.h>
 #include<sys/shm.h>
+#include<sys/ipc.h>
 #include<sys/types.h>
 #include<sys/sem.h>
+#include<semaphore.h>
 using namespace std;
 
 // 循环队列类
@@ -116,7 +117,7 @@ public:
 
 
 
-// 信号量类
+// 信号量类 
 class csemp
 {
 private:
@@ -137,7 +138,7 @@ private:
     // 如果信号量用于生产消费者模型，设置为0
     short m_sem_flg;
 
-    csemp(const csemp& ) = delete;  // 禁用拷贝构造函数
+    csemp(const csemp& ) = delete;              // 禁用拷贝构造函数
     csemp& operator=(const csemp&) = delete;    // 禁用赋值运算符
 
 public:
