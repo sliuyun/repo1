@@ -20,7 +20,7 @@ int main(int argc,char* argv[])
     if(argc != 3)
     {
         cout<<"请依次输入程序名、服务端IP、服务端端口\n";
-        cout<<"Example:./demo1 192.168.87.53 1234";
+        cout<<"Example:./demo1 192.168.87.53 1234\n";
         return -1;
     }
 
