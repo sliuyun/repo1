@@ -19,7 +19,7 @@ int main(int argc,char* argv[])
     if(argc != 2)
     {
         cout<<"请依次输入程序名、端口号"<<endl;
-        cout<<"例如:./demo2 8080"<<endl;
+        cout<<"例如:./demo2 8080";
         return -1;
     }
 
