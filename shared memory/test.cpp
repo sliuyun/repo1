@@ -1,3 +1,5 @@
+// 该程序演示共享内存的完整使用步骤
+
 #include<iostream>
 #include<cstring>
 #include<sys/shm.h>

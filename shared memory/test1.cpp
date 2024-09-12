@@ -1,3 +1,5 @@
+// 该test1.cpp 用于简单演示创建共享内存并分离
+
 #include<iostream>
 #include<cstring>
 #include<sys/shm.h>
