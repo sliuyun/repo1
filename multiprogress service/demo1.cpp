@@ -123,7 +123,7 @@ int main(int argc,char* argv[])
     // 与服务端通讯
     // 客户端发送一个请求报文给服务器，等待服务器的回复，收到回复后，在发送下一个请求报文
     string buffer;
-    for(int i = 0; i<8; i++)        // 发送3次      
+    for(int i = 0; i<10000; i++)        // 发送3次      
     {
         bool res;
         buffer = "hello world "+to_string(i+1);       // 构造客户端发送的请求报文

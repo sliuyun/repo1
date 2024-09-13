@@ -5,7 +5,7 @@
 #include<cstring>
 #include<cstdlib>
 #include<unistd.h>
-// #include<netdb.h>
+#include<signal.h>
 #include<sys/types.h>
 #include<sys/socket.h>
 #include<arpa/inet.h>
@@ -129,13 +129,37 @@ public:
         return true;        
     }
 
-
-    ~ctcpserve()
+    bool closelistenfd()
     {
-        if(listenfd != -1){ close(listenfd); }
-        if(clientfd != -1){ close(clientfd); }
+        if(listenfd != -1)
+        {
+            close(listenfd);
+            listenfd = -1;
+            return true;
+        }
+        return false;
     }
-};
+
+    bool closeclientfd()
+    {
+        if(clientfd != -1)
+        {
+            close(clientfd);
+            clientfd = -1;
+            return true;
+        }
+        return false;
+    }
+
+
+    ~ctcpserve(){}
+
+
+}cs;
+
+
+void FathEXIT(int sig); // 父进程信号处理函数
+void ChildEXIT(int sig);    // 子进程信号处理函数
 
 int main(int argc,char* argv[])
 {
@@ -145,7 +169,18 @@ int main(int argc,char* argv[])
         cout<<"Example:./serve 9999\n";
         return -1;
     }
-    ctcpserve cs;
+
+    // 先忽略所有信号
+    // 信号处理是异步的，不会阻塞或中断程序的执行流，信号可以在任何时刻被触发，处理动作在后台完成。
+    for(int i = 1; i<=64; i++){
+        signal(i,SIG_IGN);
+    }
+
+    // 设置了信号处理函数，如果收到2和15，将使用信号处理函数，覆盖前面的忽略
+    signal(SIGTERM,FathEXIT);
+    signal(SIGINT,FathEXIT);
+
+
 
     if(cs.initserve(atoi(argv[1])) == false)
     {
@@ -164,9 +199,14 @@ int main(int argc,char* argv[])
         if(pid == -1){ return -1;}      // 系统资源不足
         if(pid > 0) 
         {
+            cs.closeclientfd();         // 父进程关闭客户端连接的socket
             continue;
         }
 
+        cs.closelistenfd();             // 子进程关闭监听socket
+        // 子进程需要重新设置信号
+        signal(SIGTERM,ChildEXIT);
+        signal(SIGINT,ChildEXIT);
 
         // 接收客户端发送的数据
         string buffer;
@@ -188,7 +228,40 @@ int main(int argc,char* argv[])
                 break;
             }
             cout<<"发送："<<buffer<<endl;
-        }        
+        }
+
+        return 0;       // 子进程一定要退出，否则会回到accept函数的位置        
     }
 
+}
+
+// 父进程信号处理函数
+void FathEXIT(int sig)
+{
+    // 以下代码是为了防止信号处理函数在执行过程中再次被信号中断
+    signal(SIGINT,SIG_IGN);
+    signal(SIGTERM,SIG_IGN);
+
+    cout<<"父进程退出，sig = "<<sig<<endl;
+
+    kill(0,SIGTERM);    // 向全部的子进程发送15的信号，并通知他们退出
+
+    // 在这里释放资源代码（全局资源）……
+    cs.closelistenfd();                 // 关闭父进程监听套接字
+
+    exit(0);
+}
+
+// 子进程信号处理函数
+void ChildEXIT(int sig)
+{
+    // 以下代码是为了防止信号处理函数在执行过程中再次被信号中断 
+
+    cout<<"子进程"<<getpid()<<"退出，sig = "<<sig<<"\n";
+
+    // 释放子进程资源代码……
+    cs.closeclientfd();                 // 关闭子进程连接套接字
+
+
+    exit(0);
 }
