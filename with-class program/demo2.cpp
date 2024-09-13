@@ -149,7 +149,7 @@ int main(int argc,char* argv[])
 
     cs.initserve(atoi(argv[1]));
 
-    // 等待客户端连接。如果客户端没有连接上来，accept()函数会阻塞程序执行
+    // 死循环，会一直等待客户端连接。如果客户端没有连接上来，accept()函数会阻塞程序执行
     if(cs.accept() !=false)
     {
         cout<<"客户端IP："<<cs.getclientip()<<endl;        
