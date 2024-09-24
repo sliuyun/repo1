@@ -24,7 +24,7 @@ int main(int argc,char* argv[])
         cout<<"Example:./app 5005\n";
     }
 
-    // 初始化服务端用于监听的套接字
+    // 初始化服务端用于监听的套接字，进过初始化后的套接字处于监听状态
     int listenfd = initserve(atoi(argv[1]));
     cout<<"listenfd = "<<listenfd<<endl;
 
@@ -34,19 +34,19 @@ int main(int argc,char* argv[])
         return -1;
     }
 
-// 网络通讯-读事件
+// 网络通讯-待监视的3种读事件
 // 1. 已连接队列中有已准备的socket（有新的客户端连上来）
 // 2. 接受缓存中有数据可以读（对端发送的报文已到达）
 // 3. TCP连接已断开（对端调用close()函数关闭了连接）
 
-// 网络通讯-写事件
+// 网络通讯-待监视的1种写事件
 // ​发送缓冲区没有满，可以写入数据（可以向对端发送报文）
 
     fd_set readfds;             // 需要监视读事件的socket集合，大小一般为1024位
     FD_ZERO(&readfds);          // 初始化readfds，把bitmap中的每一位都置为0
     FD_SET(listenfd,&readfds);  // 把服务端用于监听的socket加入readfds 
 
-    int maxfd = listenfd;       // readfds中的socket的最大值
+    int maxfd = listenfd;       // readfds中的socket的最大值，通常情况下，最新的文件描述符在
 
     while(true)
     {
@@ -58,20 +58,21 @@ int main(int argc,char* argv[])
         // select()等待事件的发生
 
         fd_set temfds = readfds;        // 在select()函数中，会修改bitmap，所以要先把readfds复制一份，再把temfs传给select()函数
+        
         // int infds = select(maxfd+1,&temfds,NULL,NULL,&timeout);
         int infds = select(maxfd+1,&temfds,NULL,NULL,0);
 
         if(infds < 0)
         {
-            perror("select failed.\n");
+            perror("select() failed.\n");
             break;
         }
 
         // 如果infds==0，表示select超时
         if(infds == 0)
         {
-            perror("select() timeout.\n");
-            break;
+            printf("select timeout.\n");
+            continue;
         }
 
         // 如果infds>0，表示有事件发生，infds存放了已发生事件的个数
@@ -87,20 +88,22 @@ int main(int argc,char* argv[])
                 int clientfd = accept(listenfd,(struct sockaddr*)&client,&len);
                 if(clientfd < 0){ perror("accept() falied.\n"); continue; }
 
-                printf("accept client(socket = %d) ok.\n",clientfd);
+                printf("accept client(socket = %d) ok\n",clientfd);
 
                 FD_SET(clientfd,&readfds);                      // 把bitmap中新连上来的客户端的标志设置为1
 
                 if(maxfd < clientfd) maxfd = clientfd;          // 更新maxfd的值
             }
+            
+            // 如果是客户端连接的socket有事件，表示接收缓存中有数据可以读（对端发送的报文已送达），或者有客户已断开连接
             else
             {
-                // 如果是客户端连接的socket有事件，表示接收缓存中有数据可以读（对端发送的报文已送达），或者有客户已断开连接
+                
                 char buffer[1024];              // 存放从客户端读取的数据
                 memset(buffer,0,sizeof(buffer));
-                if(recv(eventfd,buffer,sizeof(buffer),0) <= 0)
+                if(recv(eventfd,buffer,sizeof(buffer),0) <= 0)  // 如果客户端的连接已断开
                 {
-                    // 如果客户端的连接已断开
+
                     printf("client(eventfd = %d) disconencted.\n",eventfd);
                     close(eventfd);     // 关闭客户端的socket
                     FD_CLR(eventfd,&readfds);   // 把bitmap中已关闭客户端的标志位清空
@@ -116,10 +119,10 @@ int main(int argc,char* argv[])
                         }
                     }
                 }
-                else
+                else    // 如果客户端有报文发过来
                 {
-                    // 如果客户端有报文发过来
-                    printf("recv(eventfd = %d).%s\n",eventfd,buffer);
+                    
+                    printf("recv(eventfd = %d)%s\n",eventfd,buffer);
 
                     // 把接收到的报文内容原封不动的发回去
                     send(eventfd,buffer,sizeof(buffer),0);

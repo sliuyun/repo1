@@ -56,11 +56,14 @@ int main(int argc,char* argv[])
     // 第三步，与服务端通讯
     // 客户端发送一个请求报文给服务器，等待服务器的回复，收到回复后，在发送下一个请求报文
     char buffer[1024];
-    for(int i = 0; i<10; i++)        // 发送3次      
+    for(int i = 0; i<10; i++)        // 发送10次      
     {
         int res;
         memset(buffer,0,sizeof(buffer));
-        sprintf(buffer,"hello world %d",i+1);       // 构造客户端发送的请求报文
+        printf("Please input:");
+        cin.getline(buffer,sizeof(buffer));
+
+        // sprintf(buffer,"hello world %d",i+1);       // 构造客户端发送的请求报文
         res = send(sockfd,buffer,sizeof(buffer),0);
         if(res == -1)
         {
@@ -77,7 +80,7 @@ int main(int argc,char* argv[])
             cout<<"res = "<<res<<endl;
             break;
         }
-        cout<<"接收："<<buffer<<endl;
+        cout<<"接收:"<<buffer<<endl;
         sleep(1);
     }
 
